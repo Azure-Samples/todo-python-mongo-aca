@@ -6,7 +6,7 @@ param tags object
 param apiImageName string = ''
 param webImageName string = ''
 
-var abbrs = loadJsonContent('abbreviations.json')
+var abbrs = loadJsonContent('infra/abbreviations.json')
 
 resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2022-03-01' = {
   name: '${abbrs.appManagedEnvironments}${resourceToken}'
