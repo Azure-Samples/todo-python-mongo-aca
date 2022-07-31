@@ -6,7 +6,7 @@ param tags object
 param apiImageName string = ''
 param webImageName string = ''
 
-var abbrs = loadJsonContent('infra/abbreviations.json')
+var abbrs = loadJsonContent('abbreviations.json')
 
 resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2022-03-01' = {
   name: '${abbrs.appManagedEnvironments}${resourceToken}'
@@ -83,7 +83,7 @@ resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2021-1
   }
 }
 
-module applicationInsightsResources 'infra/applicationinsights.bicep' = {
+module applicationInsightsResources 'applicationinsights.bicep' = {
   name: 'applicationinsights-resources'
   params: {
     resourceToken: resourceToken
