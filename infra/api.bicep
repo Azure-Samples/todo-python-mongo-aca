@@ -30,6 +30,10 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' existing = {
   name: '${abbrs.keyVaultVaults}${resourceToken}'
 }
 
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' existing = {
+  name: '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
+}
+
 resource api 'Microsoft.App/containerApps@2022-03-01' = {
   name: '${abbrs.appContainerApps}api-${resourceToken}'
   location: location
@@ -70,10 +74,6 @@ resource api 'Microsoft.App/containerApps@2022-03-01' = {
               name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
               value: applicationInsights.properties.ConnectionString
             }
-            {
-              name: 'AZURE_KEY_VAULT_ENDPOINT'
-              value: keyVault.properties.vaultUri
-            }
           ]
         }
       ]
@@ -81,22 +81,71 @@ resource api 'Microsoft.App/containerApps@2022-03-01' = {
   }
 }
 
-resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2021-10-01' = {
-  name: '${keyVault.name}/add'
+
+// create connection between api and keyvault
+// todo: register servicelinker RP https://github.com/Azure/bicep/issues/3267
+resource linkerToKeyVault 'Microsoft.ServiceLinker/linkers@2022-05-01' = {
+  name: '${abbrs.serviceLinkerKVlinker}${resourceToken}'
+  scope: api
   properties: {
-    accessPolicies: [
-      {
-        objectId: api.identity.principalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-        tenantId: subscription().tenantId
+    targetService: {
+      id: keyVault.id
+      resourceProperties: {
+        connectAsKubernetesCsiDriver: false
+        type: 'KeyVault'
       }
-    ]
+      type: 'AzureResource'
+    }
+    clientType: 'none'
+    scope: 'main'
+    authInfo: {
+      authType: 'systemAssignedIdentity'
+    }
   }
 }
+
+// create connection between api and cosmosdb
+resource linkerToCosmosdb 'Microsoft.ServiceLinker/linkers@2022-05-01' = {
+  name: '${abbrs.serviceLinkerCosmoslinker}${resourceToken}'
+  scope: api
+  properties: {
+    targetService: {
+      type: 'AzureResource'
+      id: '${cosmos.id}/mongodbDatabases/Todo'
+    }    
+    clientType: 'none'
+    scope: 'main'
+    authInfo: {
+      authType: 'secret'
+      secretInfo: {
+        secretType: 'rawValue'
+      }
+    }
+    secretStore: {
+      keyVaultId: keyVault.id
+    }
+  }
+  dependsOn: [
+    linkerToKeyVault
+  ]
+}
+
+// resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2021-10-01' = {
+//   name: '${keyVault.name}/add'
+//   properties: {
+//     accessPolicies: [
+//       {
+//         objectId: api.identity.principalId
+//         permissions: {
+//           secrets: [
+//             'get'
+//             'list'
+//           ]
+//         }
+//         tenantId: subscription().tenantId
+//       }
+//     ]
+//   }
+// }
 
 output API_URI string = 'https://${api.properties.configuration.ingress.fqdn}'

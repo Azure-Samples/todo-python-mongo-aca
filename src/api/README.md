@@ -18,6 +18,7 @@ $ poetry install
 
 ## Running
 
+// yungez: todo, delete
 Before running, set the `AZURE_COSMOS_CONNECTION_STRING` environment variable to the connection-string for mongo/cosmos.
 
 Run the following common from the root of the api folder to start the app:

@@ -8,28 +8,45 @@ from beanie import Document, PydanticObjectId
 from pydantic import BaseModel, BaseSettings
 
 
-def keyvault_name_as_attr(name: str) -> str:
-    return name.replace("-", "_").upper()
+# def keyvault_name_as_attr(name: str) -> str:
+#     return name.replace("-", "_").upper()
 
+def parse_secret_name(secretUri: str) -> str:
+    if secretUri == '':
+        return secretUri
+    return secretUri.split('/secrets/')[1][:-1]
 
 class Settings(BaseSettings):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Load secrets from keyvault
-        if self.AZURE_KEY_VAULT_ENDPOINT:
+        # # Load secrets from keyvault
+        # if self.AZURE_KEY_VAULT_ENDPOINT:
+        #     credential = DefaultAzureCredential()
+        #     keyvault_client = SecretClient(self.AZURE_KEY_VAULT_ENDPOINT, credential)
+        #     for secret in keyvault_client.list_properties_of_secrets():
+        #         setattr(
+        #             self,
+        #             keyvault_name_as_attr(secret.name),
+        #             keyvault_client.get_secret(secret.name).value,
+        #         )
+        
+        # load cosmosdb connection string(in env, created by SC) from keyvault
+        if self.AZURE_KEYVAULT_RESOURCEENDPOINT:
             credential = DefaultAzureCredential()
-            keyvault_client = SecretClient(self.AZURE_KEY_VAULT_ENDPOINT, credential)
-            for secret in keyvault_client.list_properties_of_secrets():
-                setattr(
-                    self,
-                    keyvault_name_as_attr(secret.name),
-                    keyvault_client.get_secret(secret.name).value,
-                )
+            keyvault_client = SecretClient(self.AZURE_KEYVAULT_RESOURCEENDPOINT, credential)
+            setattr(
+                self,
+                'AZURE_COSMOS_CONNECTIONSTRING',
+                keyvault_client.get_secret(parse_secret_name(self.AZURE_COSMOS_CONNECTIONSTRING)).value
+            )
 
-    AZURE_COSMOS_CONNECTION_STRING: str = ""
+    #AZURE_COSMOS_CONNECTION_STRING: str = ""
+    AZURE_COSMOS_CONNECTIONSTRING: Optional[str] = None
+
     AZURE_COSMOS_DATABASE_NAME: str = "Todo"
-    AZURE_KEY_VAULT_ENDPOINT: Optional[str] = None
+    #AZURE_KEY_VAULT_ENDPOINT: Optional[str] = None
+    AZURE_KEYVAULT_RESOURCEENDPOINT: Optional[str] = None
     APPLICATIONINSIGHTS_CONNECTION_STRING: Optional[str] = None
     APPLICATIONINSIGHTS_ROLENAME: Optional[str] = "API"
 

@@ -112,6 +112,8 @@
     "serviceBusNamespacesTopics": "sbt-",
     "serviceEndPointPolicies": "se-",
     "serviceFabricClusters": "sf-",
+    "serviceLinkerKVlinker": "linkerkv_",
+    "serviceLinkerCosmoslinker": "linkercosmos_",
     "signalRServiceSignalR": "sigr",
     "sqlManagedInstances": "sqlmi-",
     "sqlServers": "sql-",

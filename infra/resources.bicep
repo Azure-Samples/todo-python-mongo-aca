@@ -57,12 +57,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-10-01' = {
     accessPolicies: []
   }
 
-  resource cosmosconnectionstring 'secrets' = {
-    name: 'AZURE-COSMOS-CONNECTION-STRING'
-    properties: {
-      value: cosmos.listConnectionStrings().connectionStrings[0].connectionString
-    }
-  }
+  // service connector will take care of setting secrets in keyvault
+  // resource cosmosconnectionstring 'secrets' = {
+  //   name: 'AZURE-COSMOS-CONNECTION-STRING'
+  //   properties: {
+  //     value: cosmos.listConnectionStrings().connectionStrings[0].connectionString
+  //   }
+  // }
 }
 
 resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2021-10-01' = if (!empty(principalId)) {
@@ -219,6 +220,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2021-10-15' = {
     }
   }
 }
+
 
 output AZURE_COSMOS_CONNECTION_STRING_KEY string = 'AZURE-COSMOS-CONNECTION-STRING'
 output AZURE_COSMOS_DATABASE_NAME string = cosmos::database.name
