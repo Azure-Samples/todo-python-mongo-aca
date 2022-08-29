@@ -83,7 +83,7 @@ resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-0
   }
 }
 
-module applicationInsightsResources 'applicationinsights.bicep' = {
+module applicationInsightsResources 'modules/applicationinsights.bicep' = {
   name: 'applicationinsights-resources'
   params: {
     resourceToken: resourceToken
