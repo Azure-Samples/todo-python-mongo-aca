@@ -1,17 +1,19 @@
-param location string
-param resourceToken string
-param tags object
+param environmentName string
+param location string = resourceGroup().location
+param sku object = {
+  name: 'Standard'
+}
 
-var abbrs = loadJsonContent('../abbreviations.json')
+var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
+var tags = { 'azd-env-name': environmentName }
+var abbrs = loadJsonContent('../../abbreviations.json')
 
 // 2022-02-01-preview needed for anonymousPullEnabled
 resource containerRegistry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
   name: '${abbrs.containerRegistryRegistries}${resourceToken}'
   location: location
   tags: tags
-  sku: {
-    name: 'Standard'
-  }
+  sku: sku
   properties: {
     adminUserEnabled: true
     anonymousPullEnabled: false

@@ -1,109 +1,86 @@
-param name string
-param location string
+param environmentName string
+param location string = resourceGroup().location
 param principalId string = ''
-param resourceToken string
-param tags object
 param apiImageName string = ''
 param webImageName string = ''
 
-module acaResources 'modules/aca.bicep' = {
-  name: 'aca-resources'
+module containerAppsEnvironment './core/host/container-apps-environment.bicep' = {
+  name: 'container-apps-environment-resources'
   params: {
+    environmentName: environmentName
     location: location
-    resourceToken: resourceToken
-    tags: tags
-  }
-  dependsOn: [
-    logAnalyticsWorkspaceResources
-  ]
-}
-
-module acrResources 'modules/acr.bicep' = {
-  name: 'acr-resources'
-  params: {
-    location: location
-    resourceToken: resourceToken
-    tags: tags
+    logAnalyticsWorkspaceName: monitoring.outputs.AZURE_LOG_ANALYTICS_WORKSPACE_NAME
   }
 }
 
-module apiResources 'modules/api.bicep' = {
-  name: 'api-resources'
+module containerRegistry './core/host/container-registry.bicep' = {
+  name: 'container-registry-resources'
   params: {
-    name: name
+    environmentName: environmentName
     location: location
-    imageName: apiImageName != '' ? apiImageName : 'nginx:latest'
   }
-  dependsOn: [
-    acaResources
-    acrResources
-    applicationInsightsResources
-    keyVaultResources
-  ]
 }
 
-module webResources 'modules/web.bicep' = {
+module web './app/web.bicep' = {
   name: 'web-resources'
   params: {
-    name: name
-    location: location
+    environmentName: environmentName
+    location:location
     imageName: webImageName != '' ? webImageName : 'nginx:latest'
   }
   dependsOn: [
-    acaResources
-    acrResources
-    applicationInsightsResources
-    keyVaultResources
-    apiResources
+    containerAppsEnvironment
+    containerRegistry
   ]
 }
 
-module keyVaultResources 'modules/keyvault.bicep' = {
-  name: 'keyvault-resources'
+module api './app/api.bicep' = {
+  name: 'api-resources'
   params: {
-    location: location
-    principalId: principalId
-    resourceToken: resourceToken
-    tags: tags
-  }
-}
-
-module applicationInsightsResources 'modules/applicationinsights.bicep' = {
-  name: 'applicationinsights-resources'
-  params: {
-    location: location
-    resourceToken: resourceToken
-    tags: tags
-    workspaceId: logAnalyticsWorkspaceResources.outputs.AZURE_LOG_ANALYTICS_WORKSPACE_ID
-  }
-}
-
-module logAnalyticsWorkspaceResources 'modules/loganalytics.bicep' = {
-  name: 'loganalytics-resources'
-  params: {
-    location: location
-    resourceToken: resourceToken
-    tags: tags
-  }
-}
-
-module cosmosResources '../../../templates/todo/common/infra/modules/cosmos.bicep' = {
-  name: 'cosmos-resources'
-  params: {
-    location: location
-    resourceToken: resourceToken
-    tags: tags
+    environmentName: environmentName
+    location:location
+    imageName: apiImageName != '' ? apiImageName : 'nginx:latest' 
   }
   dependsOn: [
-    keyVaultResources
+    containerAppsEnvironment
+    containerRegistry
   ]
 }
 
-output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmosResources.outputs.AZURE_COSMOS_CONNECTION_STRING_KEY
-output AZURE_COSMOS_DATABASE_NAME string = cosmosResources.outputs.AZURE_COSMOS_DATABASE_NAME
-output AZURE_KEY_VAULT_ENDPOINT string = keyVaultResources.outputs.AZURE_KEY_VAULT_ENDPOINT
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsightsResources.outputs.APPLICATIONINSIGHTS_CONNECTION_STRING
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = acrResources.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
-output AZURE_CONTAINER_REGISTRY_NAME string = acrResources.outputs.AZURE_CONTAINER_REGISTRY_NAME
-output WEB_URI string = webResources.outputs.WEB_URI
-output API_URI string = apiResources.outputs.API_URI
+// The application database
+module cosmos './app/db.bicep' = {
+  name: 'cosmos-resources'
+  params: {
+    environmentName: environmentName
+    location: location
+    keyVaultName: keyVault.outputs.AZURE_KEY_VAULT_NAME
+  }
+}
+
+// Store secrets in a keyvault
+module keyVault './core/security/keyvault.bicep' = {
+  name: 'keyvault-resources'
+  params: {
+    environmentName: environmentName
+    location: location
+    principalId: principalId
+  }
+}
+
+// Monitor application with Azure Monitor
+module monitoring './core/monitor/monitoring.bicep' = {
+  name: 'monitoring-resources'
+  params: {
+    environmentName: environmentName
+    location: location
+  }
+}
+
+output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmos.outputs.AZURE_COSMOS_CONNECTION_STRING_KEY
+output AZURE_COSMOS_DATABASE_NAME string = cosmos.outputs.AZURE_COSMOS_DATABASE_NAME
+output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.AZURE_KEY_VAULT_ENDPOINT
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.APPLICATIONINSIGHTS_CONNECTION_STRING
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
+output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.AZURE_CONTAINER_REGISTRY_NAME
+output WEB_URI string = web.outputs.WEB_URI
+output API_URI string = api.outputs.API_URI
