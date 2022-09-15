@@ -6,7 +6,7 @@ param webImageName string = ''
 
 // Container apps host (including container registry)
 module containerApps './core/host/container-apps.bicep' = {
-  name: 'container-apps-resources'
+  name: 'container-apps'
   params: {
     environmentName: environmentName
     location: location
@@ -15,8 +15,8 @@ module containerApps './core/host/container-apps.bicep' = {
 }
 
 // Web frontend
-module web './app/web.bicep' = {
-  name: 'web-resources'
+module web './app/web-container-app.bicep' = {
+  name: 'web'
   params: {
     environmentName: environmentName
     location: location
@@ -29,8 +29,8 @@ module web './app/web.bicep' = {
 }
 
 // Api backend
-module api './app/api.bicep' = {
-  name: 'api-resources'
+module api './app/api-container-app.bicep' = {
+  name: 'api'
   params: {
     environmentName: environmentName
     location: location
@@ -44,7 +44,7 @@ module api './app/api.bicep' = {
 
 // Application database
 module cosmos './app/db.bicep' = {
-  name: 'cosmos-resources'
+  name: 'cosmos'
   params: {
     environmentName: environmentName
     location: location
@@ -54,7 +54,7 @@ module cosmos './app/db.bicep' = {
 
 // Store secrets in a keyvault
 module keyVault './core/security/keyvault.bicep' = {
-  name: 'keyvault-resources'
+  name: 'keyvault'
   params: {
     environmentName: environmentName
     location: location
@@ -64,7 +64,7 @@ module keyVault './core/security/keyvault.bicep' = {
 
 // Monitor application with Azure Monitor
 module monitoring './core/monitor/monitoring.bicep' = {
-  name: 'monitoring-resources'
+  name: 'monitoring'
   params: {
     environmentName: environmentName
     location: location
