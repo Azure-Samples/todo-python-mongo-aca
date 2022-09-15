@@ -15,7 +15,7 @@ module containerApps './core/host/container-apps.bicep' = {
 }
 
 // Web frontend
-module web './app/web-container-app.bicep' = {
+module web './app/web.bicep' = {
   name: 'web'
   params: {
     environmentName: environmentName
@@ -29,7 +29,7 @@ module web './app/web-container-app.bicep' = {
 }
 
 // Api backend
-module api './app/api-container-app.bicep' = {
+module api './app/api.bicep' = {
   name: 'api'
   params: {
     environmentName: environmentName
