@@ -1,230 +1,81 @@
-param name string
-param location string
+param environmentName string
+param location string = resourceGroup().location
 param principalId string = ''
-param resourceToken string
-param tags object
 param apiImageName string = ''
 param webImageName string = ''
 
-var abbrs = loadJsonContent('./abbreviations.json')
-
-resource containerAppsEnvironment 'Microsoft.App/managedEnvironments@2022-03-01' = {
-  name: '${abbrs.appManagedEnvironments}${resourceToken}'
-  location: location
-  tags: tags
-  properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspace.properties.customerId
-        sharedKey: logAnalyticsWorkspace.listKeys().primarySharedKey
-      }
-    }
-  }
-}
-
-// 2022-02-01-preview needed for anonymousPullEnabled
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
-  name: '${abbrs.containerRegistryRegistries}${resourceToken}'
-  location: location
-  tags: tags
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    adminUserEnabled: true
-    anonymousPullEnabled: false
-    dataEndpointEnabled: false
-    encryption: {
-      status: 'disabled'
-    }
-    networkRuleBypassOptions: 'AzureServices'
-    publicNetworkAccess: 'Enabled'
-    zoneRedundancy: 'Disabled'
-  }
-}
-
-resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
-  name: '${abbrs.keyVaultVaults}${resourceToken}'
-  location: location
-  tags: tags
-  properties: {
-    tenantId: subscription().tenantId
-    sku: {
-      family: 'A'
-      name: 'standard'
-    }
-    accessPolicies: []
-  }
-
-  resource cosmosconnectionstring 'secrets' = {
-    name: 'AZURE-COSMOS-CONNECTION-STRING'
-    properties: {
-      value: cosmos.listConnectionStrings().connectionStrings[0].connectionString
-    }
-  }
-}
-
-resource keyVaultAccessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2022-07-01' = if (!empty(principalId)) {
-  name: '${keyVault.name}/add'
-  properties: {
-    accessPolicies: [
-      {
-        objectId: principalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-        tenantId: subscription().tenantId
-      }
-    ]
-  }
-}
-
-module applicationInsightsResources './applicationinsights.bicep' = {
-  name: 'applicationinsights-resources'
+// Container apps host (including container registry)
+module containerApps './core/host/container-apps.bicep' = {
+  name: 'container-apps'
   params: {
-    resourceToken: resourceToken
+    environmentName: environmentName
     location: location
-    tags: tags
-    workspaceId: logAnalyticsWorkspace.id
+    logAnalyticsWorkspaceName: monitoring.outputs.logAnalyticsWorkspaceName
   }
 }
 
-module api 'api.bicep' = {
-  name: 'api-resources'
+// Web frontend
+module web './app/web.bicep' = {
+  name: 'web'
   params: {
-    name: name
+    environmentName: environmentName
     location: location
-    imageName: apiImageName != '' ? apiImageName : 'nginx:latest'
+    imageName: webImageName
+    apiName: api.outputs.API_NAME
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    containerAppsEnvironmentName: containerApps.outputs.containerAppsEnvironmentName
+    containerRegistryName: containerApps.outputs.containerRegistryName
   }
-  dependsOn: [
-    containerAppsEnvironment
-    containerRegistry
-    applicationInsightsResources
-    keyVault
-  ]
 }
 
-module web 'web.bicep' = {
-  name: 'web-resources'
+// Api backend
+module api './app/api.bicep' = {
+  name: 'api'
   params: {
-    name: name
+    environmentName: environmentName
     location: location
-    imageName: webImageName != '' ? webImageName : 'nginx:latest'
-  }
-  dependsOn: [
-    containerAppsEnvironment
-    containerRegistry
-    applicationInsightsResources
-    keyVault
-    api
-  ]
-}
-
-resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2021-06-01' = {
-  name: '${abbrs.operationalInsightsWorkspaces}${resourceToken}'
-  location: location
-  tags: tags
-  properties: any({
-    retentionInDays: 30
-    features: {
-      searchVersion: 1
-    }
-    sku: {
-      name: 'PerGB2018'
-    }
-  })
-}
-
-resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2022-05-15' = {
-  name: '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
-  kind: 'MongoDB'
-  location: location
-  tags: tags
-  properties: {
-    consistencyPolicy: {
-      defaultConsistencyLevel: 'Session'
-    }
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-        isZoneRedundant: false
-      }
-    ]
-    databaseAccountOfferType: 'Standard'
-    enableAutomaticFailover: false
-    enableMultipleWriteLocations: false
-    apiProperties: {
-      serverVersion: '4.0'
-    }
-    capabilities: [
-      {
-        name: 'EnableServerless'
-      }
-    ]
-  }
-
-  resource database 'mongodbDatabases' = {
-    name: 'Todo'
-    properties: {
-      resource: {
-        id: 'Todo'
-      }
-    }
-
-    resource list 'collections' = {
-      name: 'TodoList'
-      properties: {
-        resource: {
-          id: 'TodoList'
-          shardKey: {
-            _id: 'Hash'
-          }
-          indexes: [
-            {
-              key: {
-                keys: [
-                  '_id'
-                ]
-              }
-            }
-          ]
-        }
-      }
-    }
-
-    resource item 'collections' = {
-      name: 'TodoItem'
-      properties: {
-        resource: {
-          id: 'TodoItem'
-          shardKey: {
-            _id: 'Hash'
-          }
-          indexes: [
-            {
-              key: {
-                keys: [
-                  '_id'
-                ]
-              }
-            }
-          ]
-        }
-      }
-    }
+    imageName: apiImageName
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    containerAppsEnvironmentName: containerApps.outputs.containerAppsEnvironmentName
+    containerRegistryName: containerApps.outputs.containerRegistryName
+    keyVaultName: keyVault.outputs.keyVaultName
   }
 }
 
-output AZURE_COSMOS_CONNECTION_STRING_KEY string = 'AZURE-COSMOS-CONNECTION-STRING'
-output AZURE_COSMOS_DATABASE_NAME string = cosmos::database.name
-output AZURE_KEY_VAULT_ENDPOINT string = keyVault.properties.vaultUri
-output APPLICATIONINSIGHTS_CONNECTION_STRING string = applicationInsightsResources.outputs.APPLICATIONINSIGHTS_CONNECTION_STRING
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.properties.loginServer
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.name
-output WEB_URI string = web.outputs.WEB_URI
+// Application database
+module cosmos './app/db.bicep' = {
+  name: 'cosmos'
+  params: {
+    environmentName: environmentName
+    location: location
+    keyVaultName: keyVault.outputs.keyVaultName
+  }
+}
+
+// Store secrets in a keyvault
+module keyVault './core/security/keyvault.bicep' = {
+  name: 'keyvault'
+  params: {
+    environmentName: environmentName
+    location: location
+    principalId: principalId
+  }
+}
+
+// Monitor application with Azure Monitor
+module monitoring './core/monitor/monitoring.bicep' = {
+  name: 'monitoring'
+  params: {
+    environmentName: environmentName
+    location: location
+  }
+}
+
 output API_URI string = api.outputs.API_URI
+output APPLICATIONINSIGHTS_CONNECTION_STRING string = monitoring.outputs.applicationInsightsConnectionString
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.containerRegistryEndpoint
+output AZURE_CONTAINER_REGISTRY_NAME string = containerApps.outputs.containerRegistryName
+output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmos.outputs.cosmosConnectionStringKey
+output AZURE_COSMOS_DATABASE_NAME string = cosmos.outputs.cosmosDatabaseName
+output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.keyVaultEndpoint
+output WEB_URI string = web.outputs.WEB_URI
