@@ -15,7 +15,7 @@ module containerApps './core/host/container-apps.bicep' = {
 }
 
 // Web frontend
-module web './app/web.bicep' = {
+module web './app/web-container-app.bicep' = {
   name: 'web'
   params: {
     environmentName: environmentName
@@ -23,22 +23,22 @@ module web './app/web.bicep' = {
     imageName: webImageName
     apiName: api.outputs.API_NAME
     applicationInsightsName: monitoring.outputs.applicationInsightsName
-    containerAppsEnvironmentName: containerApps.outputs.containerAppsEnvironmentName
+    containerAppsEnvironmentName: containerApps.outputs.name
     containerRegistryName: containerApps.outputs.containerRegistryName
   }
 }
 
 // Api backend
-module api './app/api.bicep' = {
+module api './app/api-container-app.bicep' = {
   name: 'api'
   params: {
     environmentName: environmentName
     location: location
     imageName: apiImageName
     applicationInsightsName: monitoring.outputs.applicationInsightsName
-    containerAppsEnvironmentName: containerApps.outputs.containerAppsEnvironmentName
+    containerAppsEnvironmentName: containerApps.outputs.name
     containerRegistryName: containerApps.outputs.containerRegistryName
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVault.outputs.name
   }
 }
 
@@ -48,18 +48,18 @@ module apiKeyVaultAccess './core/security/keyvault-access.bicep' = {
   params: {
     environmentName: environmentName
     location: location
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVault.outputs.name
     principalId: api.outputs.API_IDENTITY_PRINCIPAL_ID
   }
 }
 
 // Application database
-module cosmos './app/db.bicep' = {
+module cosmos './app/cosmos-mongo-db.bicep' = {
   name: 'cosmos'
   params: {
     environmentName: environmentName
     location: location
-    keyVaultName: keyVault.outputs.keyVaultName
+    keyVaultName: keyVault.outputs.name
   }
 }
 
@@ -88,5 +88,5 @@ output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerApps.outputs.containe
 output AZURE_CONTAINER_REGISTRY_NAME string = containerApps.outputs.containerRegistryName
 output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmos.outputs.cosmosConnectionStringKey
 output AZURE_COSMOS_DATABASE_NAME string = cosmos.outputs.cosmosDatabaseName
-output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.keyVaultEndpoint
+output AZURE_KEY_VAULT_ENDPOINT string = keyVault.outputs.endpoint
 output WEB_URI string = web.outputs.WEB_URI
