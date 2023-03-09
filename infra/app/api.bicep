@@ -8,7 +8,7 @@ param containerRegistryName string
 param imageName string = ''
 param keyVaultName string
 param serviceName string = 'api'
-param corsACAURL string
+param corsAcaUrl string
 
 module app '../core/host/container-app.bicep' = {
   name: '${serviceName}-container-app-module'
@@ -31,7 +31,7 @@ module app '../core/host/container-app.bicep' = {
       }
       {
         name: 'REACT_APP_WEB_BASE_URL'
-        value: corsACAURL
+        value: corsAcaUrl
       }
     ]
     imageName: !empty(imageName) ? imageName : 'nginx:latest'
