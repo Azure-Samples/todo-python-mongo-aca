@@ -34,9 +34,17 @@ module app '../core/host/container-app.bicep' = {
         value: corsAcaUrl
       }
     ]
-    imageName: !empty(imageName) ? imageName : 'nginx:latest'
-    keyVaultName: keyVault.name
+    imageName: imageName
     targetPort: 3100
+  }
+}
+
+// Give the API access to KeyVault
+module apiKeyVaultAccess '../core/security/keyvault-access.bicep' = {
+  name: 'api-keyvault-access'
+  params: {
+    keyVaultName: keyVaultName
+    principalId: app.outputs.identityPrincipalId
   }
 }
 
