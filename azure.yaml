@@ -6,11 +6,9 @@ metadata:
 services:
   web:
     project: ./src/web
-    module: app/web
     language: js
     host: containerapp
   api:
     project: ./src/api
-    module: app/api
     language: python
     host: containerapp
