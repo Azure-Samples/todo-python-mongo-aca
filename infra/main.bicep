@@ -56,10 +56,12 @@ module containerApps './core/host/container-apps.bicep' = {
   scope: rg
   params: {
     name: 'app'
+    location: location
+    tags: tags
     containerAppsEnvironmentName: !empty(containerAppsEnvironmentName) ? containerAppsEnvironmentName : '${abbrs.appManagedEnvironments}${resourceToken}'
     containerRegistryName: !empty(containerRegistryName) ? containerRegistryName : '${abbrs.containerRegistryRegistries}${resourceToken}'
-    location: location
     logAnalyticsWorkspaceName: monitoring.outputs.logAnalyticsWorkspaceName
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
   }
 }
 
@@ -70,6 +72,7 @@ module web './app/web.bicep' = {
   params: {
     name: !empty(webContainerAppName) ? webContainerAppName : '${abbrs.appContainerApps}web-${resourceToken}'
     location: location
+    tags: tags
     identityName: '${abbrs.managedIdentityUserAssignedIdentities}web-${resourceToken}'
     apiBaseUrl: !empty(webApiBaseUrl) ? webApiBaseUrl : api.outputs.SERVICE_API_URI
     applicationInsightsName: monitoring.outputs.applicationInsightsName
@@ -86,13 +89,14 @@ module api './app/api.bicep' = {
   params: {
     name: !empty(apiContainerAppName) ? apiContainerAppName : '${abbrs.appContainerApps}api-${resourceToken}'
     location: location
+    tags: tags
     identityName: '${abbrs.managedIdentityUserAssignedIdentities}api-${resourceToken}'
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
     keyVaultName: keyVault.outputs.name
     corsAcaUrl: corsAcaUrl
-    exists: webAppExists
+    exists: apiAppExists
   }
 }
 
@@ -182,4 +186,4 @@ output REACT_APP_WEB_BASE_URL string = web.outputs.SERVICE_WEB_URI
 output SERVICE_API_NAME string = api.outputs.SERVICE_API_NAME
 output SERVICE_WEB_NAME string = web.outputs.SERVICE_WEB_NAME
 output USE_APIM bool = useAPIM
-output SERVICE_API_ENDPOINTS array = useAPIM ? [ apimApi.outputs.SERVICE_API_URI, api.outputs.SERVICE_API_URI ]: []
+output SERVICE_API_ENDPOINTS array = useAPIM ? [ apimApi.outputs.SERVICE_API_URI, api.outputs.SERVICE_API_URI ] : []
