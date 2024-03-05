@@ -31,6 +31,13 @@ param webAppExists bool = false
 @description('Flag to use Azure API Management to mediate the calls between the Web frontend and the backend API')
 param useAPIM bool = false
 
+@description('API Management SKU to use if APIM is enabled')
+param apimSku string = 'Consumption'
+
+@description('Hostname suffix for container registry. Set when deploying to sovereign clouds')
+param containerRegistryHostSuffix string = 'azurecr.io'
+
+
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
@@ -85,6 +92,7 @@ module web './app/web.bicep' = {
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
+    containerRegistryHostSuffix: containerRegistryHostSuffix
     exists: webAppExists
   }
 }
@@ -101,6 +109,7 @@ module api './app/api.bicep' = {
     applicationInsightsName: monitoring.outputs.applicationInsightsName
     containerAppsEnvironmentName: containerApps.outputs.environmentName
     containerRegistryName: containerApps.outputs.registryName
+    containerRegistryHostSuffix: containerRegistryHostSuffix
     keyVaultName: keyVault.outputs.name
     corsAcaUrl: corsAcaUrl
     exists: apiAppExists
@@ -151,6 +160,7 @@ module apim './core/gateway/apim.bicep' = if (useAPIM) {
   scope: rg
   params: {
     name: !empty(apimServiceName) ? apimServiceName : '${abbrs.apiManagementService}${resourceToken}'
+    sku: apimSku
     location: location
     tags: tags
     applicationInsightsName: monitoring.outputs.applicationInsightsName
