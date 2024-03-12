@@ -6,6 +6,7 @@ param identityName string
 param apiBaseUrl string
 param applicationInsightsName string
 param containerAppsEnvironmentName string
+param containerRegistryHostSuffix string
 param containerRegistryName string
 param serviceName string = 'web'
 param exists bool
@@ -26,6 +27,7 @@ module app '../core/host/container-app-upsert.bicep' = {
     exists: exists
     containerAppsEnvironmentName: containerAppsEnvironmentName
     containerRegistryName: containerRegistryName
+    containerRegistryHostSuffix: containerRegistryHostSuffix
     env: [
       {
         name: 'REACT_APP_APPLICATIONINSIGHTS_CONNECTION_STRING'
