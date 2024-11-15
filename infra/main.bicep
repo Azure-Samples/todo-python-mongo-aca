@@ -37,12 +37,8 @@ param apimSku string = 'Consumption'
 @description('Hostname suffix for container registry. Set when deploying to sovereign clouds')
 param containerRegistryHostSuffix string = 'azurecr.io'
 
-
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
-
-@description('The base URL used by the web service for sending API requests')
-param webApiBaseUrl string = ''
 
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))

@@ -17,9 +17,6 @@
     "webAppExists": {
       "value": "${SERVICE_WEB_RESOURCE_EXISTS=false}"
     },
-    "webApiBaseUrl": {
-      "value": "${API_BASE_URL}"
-    },
     "useAPIM": {
       "value": "${USE_APIM=false}"
     },
