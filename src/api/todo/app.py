@@ -72,9 +72,9 @@ from . import routes  # NOQA
 @app.on_event("startup")
 async def startup_event():
     client = motor.motor_asyncio.AsyncIOMotorClient(
-        settings.AZURE_COSMOS_CONNECTION_STRING
+        settings.AZURE_DOCUMENTDB_CONNECTION_STRING
     )
     await init_beanie(
-        database=client[settings.AZURE_COSMOS_DATABASE_NAME],
+        database=client[settings.AZURE_DOCUMENTDB_DATABASE_NAME],
         document_models=__beanie_models__,
     )

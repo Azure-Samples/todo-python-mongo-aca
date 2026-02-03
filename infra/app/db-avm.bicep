@@ -1,9 +1,9 @@
 param accountName string
 param location string = resourceGroup().location
 param tags object = {}
-param cosmosDatabaseName string = ''
+param documentdbDatabaseName string = ''
 param keyVaultResourceId string
-param connectionStringKey string = 'AZURE-COSMOS-CONNECTION-STRING'
+param connectionStringKey string = 'AZURE-DOCUMENTDB-CONNECTION-STRING'
 param collections array = [
   {
     name: 'TodoList'
@@ -44,10 +44,10 @@ param collections array = [
 ]
 
 var defaultDatabaseName = 'Todo'
-var actualDatabaseName = !empty(cosmosDatabaseName) ? cosmosDatabaseName : defaultDatabaseName
+var actualDatabaseName = !empty(documentdbDatabaseName) ? documentdbDatabaseName : defaultDatabaseName
 
-module cosmos 'br/public:avm/res/document-db/database-account:0.6.0' = {
-  name: 'cosmos-mongo'
+module documentdb 'br/public:avm/res/document-db/database-account:0.6.0' = {
+  name: 'documentdb-mongo'
   params: {
     locations: [
       {
@@ -74,4 +74,4 @@ module cosmos 'br/public:avm/res/document-db/database-account:0.6.0' = {
 
 output connectionStringKey string = connectionStringKey
 output databaseName string = actualDatabaseName
-output endpoint string = cosmos.outputs.endpoint
+output endpoint string = documentdb.outputs.endpoint

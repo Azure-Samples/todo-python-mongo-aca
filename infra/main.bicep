@@ -18,7 +18,7 @@ param applicationInsightsDashboardName string = ''
 param applicationInsightsName string = ''
 param containerAppsEnvironmentName string = ''
 param containerRegistryName string = ''
-param cosmosAccountName string = ''
+param documentdbAccountName string = ''
 param keyVaultName string = ''
 param logAnalyticsName string = ''
 param resourceGroupName string = ''
@@ -150,11 +150,11 @@ module api 'br/public:avm/ptn/azd/container-app-upsert:0.1.1' = {
 }
 
 // The application database
-module cosmos './app/db-avm.bicep' = {
-  name: 'cosmos'
+module documentdb './app/db-avm.bicep' = {
+  name: 'documentdb'
   scope: rg
   params: {
-    accountName: !empty(cosmosAccountName) ? cosmosAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
+    accountName: !empty(documentdbAccountName) ? documentdbAccountName : '${abbrs.documentDBDatabaseAccounts}${resourceToken}'
     location: location
     tags: tags
     keyVaultResourceId: keyVault.outputs.resourceId
@@ -250,8 +250,8 @@ module apimApi 'br/public:avm/ptn/azd/apim-api:0.1.0' = if (useAPIM) {
 }
 
 // Data outputs
-output AZURE_COSMOS_CONNECTION_STRING_KEY string = cosmos.outputs.connectionStringKey
-output AZURE_COSMOS_DATABASE_NAME string = cosmos.outputs.databaseName
+output AZURE_DOCUMENTDB_CONNECTION_STRING_KEY string = documentdb.outputs.connectionStringKey
+output AZURE_DOCUMENTDB_DATABASE_NAME string = documentdb.outputs.databaseName
 
 // App outputs
 output API_CORS_ACA_URL string = corsAcaUrl

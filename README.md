@@ -8,14 +8,14 @@ languages:
 - html
 products:
 - azure
-- azure-cosmos-db
+- azure-documentdb
 - azure-container-apps
 - azure-container-registry
 - azure-monitor
 - azure-pipelines
 urlFragment: todo-python-mongo-aca
 name: Containerized React Web App with Python API and MongoDB on Azure
-description: A complete ToDo app with Python FastAPI and Azure Cosmos API for MongoDB for storage. Uses Azure Developer CLI (azd) to build, deploy, and monitor
+description: A complete ToDo app with Python FastAPI and Azure DocumentDB (with MongoDB compatibility) for storage. Uses Azure Developer CLI (azd) to build, deploy, and monitor
 ---
 <!-- YAML front-matter schema: https://review.learn.microsoft.com/en-us/help/contribute/samples/process/onboarding?branch=main#supported-metadata-fields-for-readmemd -->
 
@@ -84,7 +84,7 @@ azd up
 This application utilizes the following Azure resources:
 
 - [**Azure Container Apps**](https://docs.microsoft.com/azure/container-apps/) to host the Web frontend and API backend
-- [**Azure Cosmos DB API for MongoDB**](https://docs.microsoft.com/azure/cosmos-db/mongodb/mongodb-introduction) for storage
+- [**Azure DocumentDB (with MongoDB compatibility)**](https://learn.microsoft.com/en-us/azure/documentdb/) for storage
 - [**Azure Monitor**](https://docs.microsoft.com/azure/azure-monitor/) for monitoring and logging
 - [**Azure Key Vault**](https://docs.microsoft.com/azure/key-vault/) for securing secrets
 
@@ -127,7 +127,7 @@ This template creates a [managed identity](https://docs.microsoft.com/azure/acti
 
 ### Key Vault
 
-This template uses [Azure Key Vault](https://docs.microsoft.com/azure/key-vault/general/overview) to securely store your Cosmos DB connection string for the provisioned Cosmos DB account. Key Vault is a cloud service for securely storing and accessing secrets (API keys, passwords, certificates, cryptographic keys) and makes it simple to give other Azure services access to them. As you continue developing your solution, you may add as many secrets to your Key Vault as you require.
+This template uses [Azure Key Vault](https://docs.microsoft.com/azure/key-vault/general/overview) to securely store your DocumentDB connection string for the provisioned DocumentDB account. Key Vault is a cloud service for securely storing and accessing secrets (API keys, passwords, certificates, cryptographic keys) and makes it simple to give other Azure services access to them. As you continue developing your solution, you may add as many secrets to your Key Vault as you require.
 
 ## Reporting Issues and Feedback
 

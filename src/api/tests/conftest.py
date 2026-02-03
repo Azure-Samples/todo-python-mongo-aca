@@ -29,9 +29,9 @@ def app_client():
 
 @pytest.fixture(scope="session", autouse=True)
 async def initialize_database():
-    settings.AZURE_COSMOS_DATABASE_NAME = TEST_DB_NAME
+    settings.AZURE_DOCUMENTDB_DATABASE_NAME = TEST_DB_NAME
     mongo_client = motor.motor_asyncio.AsyncIOMotorClient(
-        settings.AZURE_COSMOS_CONNECTION_STRING
+        settings.AZURE_DOCUMENTDB_CONNECTION_STRING
     )
     await mongo_client.drop_database(TEST_DB_NAME)
     yield
